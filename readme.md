@@ -1,10 +1,37 @@
 # Database Cluster with HAProxy (Load Balancer & Failover)
 This project explains how a Database Cluster works using **MariaDB Galera Cluster** (as the clustered database) and **HAProxy** (as the Load Balancer and Failover manager).
 
+---
 
+## Database Used: **MariaDB 10.11**
+This project utilizes **MariaDB Galera Cluster**, a synchronous multi-master database cluster technology.
+
+### What is MariaDB Galera Cluster?
+Galera Cluster is a high-availability database cluster solution that provides:
+* **True Multi-Master Topology:** You can read and write to any node (Node 1, Node 2, or Node 3) in the cluster at any time. There is no single master node, eliminating single points of failure for write operations.
+* **Synchronous Replication:** Transactions are committed on all cluster nodes simultaneously. This guarantees that if any node fails, no data is lost and all remaining nodes are perfectly up to date.
+* **Automatic Node Membership & Joining:** Nodes can join the cluster dynamically. If a node goes offline and comes back online, it automatically synchronizes its state with the active nodes (using State Snapshot Transfer / SST or Incremental State Transfer / IST) without manual intervention.
+* **Active-Active Clustering:** Since all nodes are active and can handle read/write queries, HAProxy can instantly reroute queries to other healthy nodes in case of a node crash, preventing downtime.
+
+---
+
+## Table of Contents
+1. [Business Benefits of Database Clustering, High Availability, and Disaster Recovery](#1-business-benefits-of-database-clustering-high-availability-and-disaster-recovery)
+   - [High Availability (HA) - No Downtime](#11-high-availability-ha---no-downtime)
+   - [Disaster Recovery (DR) - Data Protection](#12-disaster-recovery-dr---data-protection)
+   - [HAProxy (Load Balancer & Failover) - Fast & Reliable Performance](#13-haproxy-load-balancer--failover---fast--reliable-performance)
+2. [Core Technical Concepts Explained](#14-core-technical-concepts-explained)
+   - [DRC (Disaster Recovery Center) Data Replication](#a-drc-disaster-recovery-center-data-replication)
+   - [Failover (Automatic Switching)](#b-failover-automatic-switching)
+   - [Load Balancing (Traffic Distribution)](#c-load-balancing-traffic-distribution)
+3. [Cluster Architecture Design](#2-cluster-architecture-design)
+4. [Step-by-Step Setup & Evidence Screenshots](#3-step-by-step-setup--evidence-screenshots)
+5. [Key HAProxy Configuration (Load Balancing & Failover)](#4-key-haproxy-configuration-load-balancing--failover)
+
+---
 
 ## 1. Business Benefits of Database Clustering, High Availability, and Disaster Recovery
-From a business perspective, keeping databases online and secure is critical. Here is why database clustering (like MariaDB Cluster or Elasticsearch Cluster) and HAProxy are important for business:
+From a business perspective, keeping databases online and secure is critical. Here is why database clustering (specifically **MariaDB Galera Cluster**) and HAProxy are important for business:
 ### 1.1 High Availability (HA) - No Downtime
 * **Business Value:** In modern e-commerce, banking, or SaaS platforms, every second of downtime costs money. 
 * **Explanation:** High Availability ensures that if one database server goes down, another server immediately takes over. Customers can still access their accounts, make purchases, and view data without experiencing any system errors.
