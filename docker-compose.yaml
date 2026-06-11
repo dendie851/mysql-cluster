@@ -1,0 +1,93 @@
+version: '3.8'
+
+networks:
+  galera_net:
+    driver: bridge
+
+services:
+  # Node 1: Initiator / Primary Node
+  node1:
+    image: mariadb:10.11
+    container_name: galera_node1
+    environment:
+      - MYSQL_ROOT_PASSWORD=rahasia
+      - MYSQL_DATABASE=db_eksperimen
+      - MYSQL_USER=user_dev
+      - MYSQL_PASSWORD=password_dev
+    ports:
+      - "3306:3306"
+    networks:
+      - galera_net
+    command: [
+      "mariadbd",
+      "--binlog-format=ROW",
+      "--wsrep-on=ON",
+      "--wsrep-provider=/usr/lib/galera/libgalera_smm.so",
+      "--wsrep-cluster-name=my_galera_cluster",
+      "--wsrep-cluster-address=gcomm://",
+      "--wsrep-node-name=node1",
+      "--wsrep-node-address=node1"
+    ]
+
+  # Node 2
+  node2:
+    image: mariadb:10.11
+    container_name: galera_node2
+    environment:
+      - MYSQL_ROOT_PASSWORD=rahasia
+    depends_on:
+      - node1
+    ports:
+      - "3307:3306"
+    networks:
+      - galera_net
+    command: [
+      "mariadbd",
+      "--binlog-format=ROW",
+      "--wsrep-on=ON",
+      "--wsrep-provider=/usr/lib/galera/libgalera_smm.so",
+      "--wsrep-cluster-name=my_galera_cluster",
+      "--wsrep-cluster-address=gcomm://node1",
+      "--wsrep-node-name=node2",
+      "--wsrep-node-address=node2"
+    ]
+
+  # Node 3
+  node3:
+    image: mariadb:10.11
+    container_name: galera_node3
+    environment:
+      - MYSQL_ROOT_PASSWORD=rahasia
+    depends_on:
+      - node2
+    ports:
+      - "3308:3306"
+    networks:
+      - galera_net
+    command: [
+      "mariadbd",
+      "--binlog-format=ROW",
+      "--wsrep-on=ON",
+      "--wsrep-provider=/usr/lib/galera/libgalera_smm.so",
+      "--wsrep-cluster-name=my_galera_cluster",
+      "--wsrep-cluster-address=gcomm://node1,node2",
+      "--wsrep-node-name=node3",
+      "--wsrep-node-address=node3"
+    ]
+
+  # --- TAMBAHAN CONTAINER HAPROXY ---
+  haproxy_lb:
+    image: haproxy:2.8
+    container_name: haproxy_load_balancer
+    volumes:
+      # Memasukkan file haproxy.cfg lokal ke dalam container
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "3309:3306"  # Port utama untuk Aplikasi masuk ke Database Cluster
+      - "8404:8404"  # Port untuk melihat Dashboard HAProxy di Browser
+    depends_on:
+      - node1
+      - node2
+      - node3
+    networks:
+      - galera_net
